@@ -127,8 +127,7 @@ class MIP_NN:
             #self.add_constraint((self.H[layer][j] == 0) >> (self.act[layer][j] == 1))
 
     # Last hidden layer should have at least as many neurons as the output layer
-    #self.add_constraint(self.H[layer].sum() >= self.architecture[-1])
-    self.add_constraint(self.H[layer].sum() >= 16)
+    self.add_constraint(self.H[layer].sum() >= self.architecture[-1])
 
   def add_fairness(self):
     layer = len(self.architecture) - 1

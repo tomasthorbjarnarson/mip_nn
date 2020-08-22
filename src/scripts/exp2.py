@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import pathlib
 import json
 import seaborn as sns
+import numpy as np
 from datetime import datetime
 from helper.misc import infer_and_accuracy, clear_print
 from helper.data import load_data, get_architecture
@@ -21,19 +22,19 @@ class Exp2():
     self.regs = [0, 1, 0.1, 0.01]
     self.seeds = [821323421,465426341,99413,1436061,7775501]
     self.dataset = "adult"
-    self.num_examples = 400
-    self.max_runtime = 24*60
+    self.num_examples = 1000
+    self.max_runtime = 10*60
     self.bound = 15
-    self.hls = [100]
+    self.hls = [16]
     self.short = short
     self.show = show
 
     if short:
       self.seeds = self.seeds[:2]
-      self.regs = [1, 0.1]
-      self.hls = [50]
-      self.num_examples = 400
-      self.max_runtime = 30
+      self.regs = [0, 0.1, 0.01]
+      self.hls = [16]
+      self.num_examples = 500
+      self.max_runtime = 10*60
 
     self.max_time_left = len(self.seeds)*len(self.regs)*self.max_runtime
 
@@ -111,10 +112,13 @@ class Exp2():
     self.results[loss][str(reg)] = nn_results
 
   def plot_results(self):
+    self.print_results()
+    return
+    plt.rcParams.update({'font.size': 16})
     settings = ["train_accs", "test_accs", "runtimes"]
     markers = ['o', 'v', '+', '*']
     for ind, setting in enumerate(settings):
-      plt.figure(ind)
+      plt.figure(ind, figsize=(8,6))
       sns.set_style("darkgrid")
       for i,reg in enumerate(self.regs):
         x = self.results[self.loss][str(reg)]["HL"]
@@ -141,6 +145,14 @@ class Exp2():
 
     if self.show:
       plt.show()
+
+  def print_results(self):
+    settings = ["train_accs", "test_accs", "runtimes"]
+    for ind, setting in enumerate(settings):
+      for i,reg in enumerate(self.regs):
+        hls = self.results[self.loss][str(reg)]["HL"]
+        res = list(self.results[self.loss][str(reg)][setting].values())
+        print(setting, reg, np.mean(res), np.std(res), np.mean(hls), np.std(hls))
 
   def print_max_time_left(self):
     time_left = self.max_time_left

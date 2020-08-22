@@ -37,10 +37,10 @@ class Exp1():
     self.show = show
 
     if short:
-      self.bounds = [1,3,7]
-      self.seeds = self.seeds[:2]
-      self.num_examples = [40,80,120]
-      self.max_runtime = 15
+      self.bounds = [1,3,7, 15]
+      self.seeds = self.seeds[:3]
+      self.num_examples = [50,100,150,200]
+      self.max_runtime = 30
 
     self.max_time_left = len(self.losses)*len(self.num_examples)*len(self.seeds)*len(self.bounds)*self.max_runtime
 
@@ -58,26 +58,34 @@ class Exp1():
         if self.short:
           json_path += "-short"
 
+        num_examples = self.num_examples
         if pathlib.Path(json_path).is_file():
           print("Path %s exists" % json_path)
           with open(json_path, "r") as f:
             data = json.loads(f.read())
             self.results[loss][str(bound)] = data["results"]
-        else:
-          self.run_nn(loss, bound)
+            num_examples = [i for i in self.num_examples if str(i) not in data["results"]["train_accs"].keys()]
+            print("num_examples", num_examples)
+            
+        if len(num_examples) != 0:
+          self.run_nn(loss, bound, num_examples)
           with open(json_path, "w") as f:
             data = {"results": self.results[loss][str(bound)], "ts": datetime.now().strftime("%d-%m-%H:%M")}
             json.dump(data, f)
 
-  def run_nn(self, loss, bound):
-    nn_results = {
-      "train_accs": {},
-      "val_accs": {},
-      "test_accs": {},
-      "runtimes": {},
-      "objs": {}
-    }
-    for N in self.num_examples:
+  def run_nn(self, loss, bound, num_examples):
+    if self.results[loss] == {}:
+      nn_results = {
+        "train_accs": {},
+        "val_accs": {},
+        "test_accs": {},
+        "runtimes": {},
+        "objs": {}
+      }
+    else:
+      nn_results = self.results[loss][str(bound)]
+
+    for N in num_examples:
       nn_results["train_accs"][N] = []
       nn_results["val_accs"][N] = []
       nn_results["test_accs"][N] = []
@@ -112,41 +120,119 @@ class Exp1():
         nn_results["runtimes"][N].append(runtime)
         nn_results["objs"][N].append(obj)
 
+        del nn.m
+        del nn
+
         self.max_time_left -= self.max_runtime
 
     self.results[loss][str(bound)] = nn_results
 
   def plot_results(self):
     settings = ["train_accs", "test_accs", "runtimes"]
+    sns.set_style("darkgrid")
+    plt.rcParams.update({'font.size': 12})
     for ind, setting in enumerate(settings):
-      plt.figure(ind)
-      sns.set_style("darkgrid")
-      for i, loss in enumerate(self.losses):
-        for bound in self.bounds:
-          x = self.num_examples
-          y,err = get_mean_std(self.results[loss][str(bound)][setting].values())
-          plt.plot(x,y, label="%s-%s" % (loss,bound), color=loss_colors[loss], ls=bound_styles[bound])
+      if setting == "train_accs" or setting == "test_accs":
+        self.subplot(ind, setting)
+      else:
+        lines, labels = self.regular_plot(ind, setting)
 
-      plt.legend()
-      plt.xlabel("Number of examples")
-      title, ylabel, ylim  = get_plot_settings(setting, self.max_runtime)
-      plt.title(title)
-      plt.ylabel(ylabel)
-      plt.ylim(ylim)
+    plt.rcParams.update({'font.size': 16})
+    legendfig = plt.figure(ind+1, figsize=(8,6))
+    legendfig.legend(lines[0:4], labels[0:4], 'upper left', bbox_to_anchor=(0.2,1.0))#, ncol=len(self.losses)//2)
+    legendfig.legend(lines[4:8], labels[4:8], 'upper left', bbox_to_anchor=(0.2,0.7))#, ncol=len(self.losses)//2)
+    legendfig.legend(lines[8:12], labels[8:12], 'upper left', bbox_to_anchor=(0.6,1.0))#, ncol=len(self.losses)//2)
+    legendfig.legend(lines[12:16], labels[12:16], 'upper left', bbox_to_anchor=(0.6,0.7))#, ncol=len(self.losses)//2)
 
-      plot_dir = "results/plots/exp1"
-      plot_dir = "%s/%s" % (plot_dir, setting)
-      pathlib.Path(plot_dir).mkdir(parents=True, exist_ok=True)
-      plot_name = ""
-      if self.short:
-        plot_name = "short"
-      plot_name = "%s_TS:%s" % (plot_name, datetime.now().strftime("%d-%m-%H:%M"))
-
-      if not self.show:
-        plt.savefig("%s/%s.png" % (plot_dir, plot_name), bbox_inches="tight")
+    if not self.show:
+      legendfig.savefig("results/plots/exp1/legend.png")
 
     if self.show:
       plt.show()
+
+  def regular_plot(self, ind, setting):
+    plt.figure(ind, figsize=(8,6), dpi=100)
+    lines = []
+    labels = []
+    for i, loss in enumerate(self.losses):
+      for bound in self.bounds:
+        x = self.num_examples
+        y,err = get_mean_std(self.results[loss][str(bound)][setting].values())
+        label = "%s P=%s" % (loss,bound)
+        lines += plt.plot(x,y, label=label, color=loss_colors[loss], ls=bound_styles[bound])
+
+        labels.append(label)
+
+    #plt.legend(ncol=len(self.losses), loc="upper left", bbox_to_anchor=(1, 0.5))
+    plt.xlabel("Number of examples")
+    title, ylabel, ylim  = get_plot_settings(setting, self.max_runtime)
+    #plt.title(title)
+    plt.ylabel(ylabel)
+    plt.ylim(ylim)
+
+    plot_dir = "results/plots/exp1"
+    plot_dir = "%s/%s" % (plot_dir, setting)
+    pathlib.Path(plot_dir).mkdir(parents=True, exist_ok=True)
+    plot_name = ""
+    if self.short:
+      plot_name = "short"
+    plot_name = "%s_TS:%s" % (plot_name, datetime.now().strftime("%d-%m-%H:%M"))
+
+    if not self.show:
+      plt.savefig("%s/%s.png" % (plot_dir, plot_name), bbox_inches="tight")
+
+    return lines, labels
+
+  def subplot(self, ind, setting):
+    ratio = 4
+    f, (ax,ax2) = plt.subplots(2,1, num=ind, sharex=True, figsize=(8,6), dpi=100, gridspec_kw={'height_ratios': [ratio, 1]})
+    for i, loss in enumerate(self.losses):
+      for bound in self.bounds:
+        x = self.num_examples
+        y,err = get_mean_std(self.results[loss][str(bound)][setting].values())
+        ax.plot(x,y, label="%s-%s" % (loss,bound), color=loss_colors[loss], ls=bound_styles[bound])
+        ax2.plot(x,y, label="%s-%s" % (loss,bound), color=loss_colors[loss], ls=bound_styles[bound])
+
+    #ax2.legend(ncol=len(self.losses), loc="lower center")
+    plt.xlabel("Number of examples")
+    title, ylabel, ylim  = get_plot_settings(setting, self.max_runtime)
+    #ax.set_title(title)
+    ax.set_ylabel(ylabel)
+    if setting in ["train_accs", "test_accs"]:
+      ax.set_ylim(58,102)
+      ax2.set_ylim(0,12)
+    else:
+      plt.ylim(ylim)
+    ax.spines["bottom"].set_visible(False)
+    ax2.spines["top"].set_visible(False)
+    ax.xaxis.tick_top()
+    ax.tick_params(labeltop=False)
+    ax2.xaxis.tick_bottom()
+    ax2.set_yticks([0,5,10])
+
+    #f.tight_layout()
+    d = .015  # how big to make the diagonal lines in axes coordinates
+    # arguments to pass to plot, just so we don't keep repeating them
+    kwargs = dict(transform=ax.transAxes, color='k', clip_on=False)
+    ax.plot((-d, +d), (-d, +d), **kwargs)        # top-left diagonal
+    ax.plot((1 - d, 1 + d), (-d, +d), **kwargs)  # top-right diagonal
+
+    kwargs.update(transform=ax2.transAxes)  # switch to the bottom axes
+    ax2.plot((-d, +d), (1 - ratio*d, 1 + ratio*d), **kwargs) # bottom-left diagonal
+    ax2.plot((1 - d, 1 + d), (1 - ratio*d, 1 + ratio*d), **kwargs) # bottom-right diagonal
+
+    plot_dir = "results/plots/exp1"
+    plot_dir = "%s/%s" % (plot_dir, setting)
+    pathlib.Path(plot_dir).mkdir(parents=True, exist_ok=True)
+    plot_name = ""
+    if self.short:
+      plot_name = "short"
+    plot_name = "%s_TS:%s" % (plot_name, datetime.now().strftime("%d-%m-%H:%M"))
+
+    if not self.show:
+      plt.savefig("%s/%s.png" % (plot_dir, plot_name), bbox_inches="tight")
+
+
 
   def print_max_time_left(self):
     time_left = self.max_time_left
@@ -177,8 +263,8 @@ def get_plot_settings(setting, max_runtime):
   }
 
   ylims = {
-    "train_accs": [0,105],
-    "test_accs": [0,105],
+    "train_accs": [60,102],
+    "test_accs": [60,102],
     "runtimes": [0, (max_runtime+2*60)*60]
   }
 

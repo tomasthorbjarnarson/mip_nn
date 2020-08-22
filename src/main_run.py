@@ -48,7 +48,7 @@ if __name__ == '__main__':
   clear_print(print_str % ("-".join([str(x) for x in architecture]), N, loss, bound))
 
   if loss == "gd_nn":
-    lr = 1e-2
+    lr = 1e-3
     nn = GD_NN(data, N, architecture, lr, bound, seed)
     nn.train(60*train_time)
   else:
@@ -61,9 +61,11 @@ if __name__ == '__main__':
   varMatrices = nn.extract_values()
 
   train_acc = infer_and_accuracy(nn.data['train_x'], nn.data["train_y"], varMatrices, nn.architecture)
+  val_acc = infer_and_accuracy(nn.data['val_x'], nn.data["val_y"], varMatrices, nn.architecture)
   test_acc = infer_and_accuracy(nn.data['test_x'], nn.data["test_y"], varMatrices, nn.architecture)
 
   print("Training accuracy: %s " % (train_acc))
+  print("Validation accuracy: %s " % (val_acc))
   print("Testing accuracy: %s " % (test_acc))
 
 
