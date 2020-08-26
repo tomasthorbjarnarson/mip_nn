@@ -18,15 +18,22 @@ loss_colors = {
 }
 
 bound_styles = {
-  1: "-.",
-  3: "-",
-  7: "--",
+  1: "-",
+  3: "--",
+  7: "-.",
   15: ":"
+}
+
+alphas = {
+  1: 0.2,
+  3: 0.3,
+  7: 0.4,
+  15: 0.5
 }
 
 class Exp1():
   def __init__(self, short, show):
-    self.losses = ["max_correct", "min_hinge", "sat_margin", "gd_nn"]
+    self.losses = ["max_correct", "sat_margin", "gd_nn", "min_hinge"]
     self.bounds = [1,3,7,15]
     self.seeds = [821323421,465426341,99413,1436061,7775501]
     self.dataset = "adult"
@@ -157,10 +164,11 @@ class Exp1():
     for i, loss in enumerate(self.losses):
       for bound in self.bounds:
         x = self.num_examples
-        y,err = get_mean_std(self.results[loss][str(bound)][setting].values())
+        #y,err = get_mean_std(self.results[loss][str(bound)][setting].values())
+        y,err = get_mean_std([self.results[loss][str(bound)][setting][str(x)] for x in self.num_examples])
         label = "%s P=%s" % (loss,bound)
         lines += plt.plot(x,y, label=label, color=loss_colors[loss], ls=bound_styles[bound])
-
+        plt.fill_between(x, y - err, y + err, alpha=alphas[bound], facecolor=loss_colors[loss])
         labels.append(label)
 
     #plt.legend(ncol=len(self.losses), loc="upper left", bbox_to_anchor=(1, 0.5))
@@ -189,9 +197,12 @@ class Exp1():
     for i, loss in enumerate(self.losses):
       for bound in self.bounds:
         x = self.num_examples
-        y,err = get_mean_std(self.results[loss][str(bound)][setting].values())
+        #y,err = get_mean_std(self.results[loss][str(bound)][setting].values())
+        y,err = get_mean_std([self.results[loss][str(bound)][setting][str(x)] for x in self.num_examples])
         ax.plot(x,y, label="%s-%s" % (loss,bound), color=loss_colors[loss], ls=bound_styles[bound])
+        ax.fill_between(x, y - err, y + err, alpha=alphas[bound], facecolor=loss_colors[loss])
         ax2.plot(x,y, label="%s-%s" % (loss,bound), color=loss_colors[loss], ls=bound_styles[bound])
+
 
     #ax2.legend(ncol=len(self.losses), loc="lower center")
     plt.xlabel("Number of examples")

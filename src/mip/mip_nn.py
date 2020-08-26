@@ -122,8 +122,8 @@ class MIP_NN:
         self.add_constraint((self.H[layer][j] == 0) >> (self.biases[layer][j] == 0))
         for n in range(self.architecture[layer+1]):
           self.add_constraint((self.H[layer][j] == 0) >> (self.weights[layer+1][j,n] == 0))
-          #for k in range(self.N):
-            #self.add_constraint((self.H[layer][j] == 0) >> (self.var_c[layer+1][k,j,n] == 0))
+          for k in range(self.N):
+            self.add_constraint((self.H[layer][j] == 0) >> (self.var_c[layer+1][k,j,n] == 0))
             #self.add_constraint((self.H[layer][j] == 0) >> (self.act[layer][j] == 1))
 
     # Last hidden layer should have at least as many neurons as the output layer

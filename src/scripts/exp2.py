@@ -19,7 +19,7 @@ reg_colors = {
 class Exp2():
   def __init__(self, short, show):
     self.loss = "sat_margin"
-    self.regs = [0, 1, 0.1, 0.01]
+    self.regs = [0, 0.1, 0.01]
     self.seeds = [821323421,465426341,99413,1436061,7775501]
     self.dataset = "adult"
     self.num_examples = 1000
@@ -30,11 +30,11 @@ class Exp2():
     self.show = show
 
     if short:
-      self.seeds = self.seeds[:2]
+      self.seeds = self.seeds[:3]
       self.regs = [0, 0.1, 0.01]
       self.hls = [16]
       self.num_examples = 500
-      self.max_runtime = 10*60
+      self.max_runtime = 5
 
     self.max_time_left = len(self.seeds)*len(self.regs)*self.max_runtime
 
@@ -50,36 +50,51 @@ class Exp2():
       json_path = "%s/%s" % (json_dir, name)
       if self.short:
         json_path += "-short"
+      json_path += ".json"
 
+      self.json_path = json_path
+
+      seeds = self.seeds
       if pathlib.Path(json_path).is_file():
         print("Path %s exists" % json_path)
         with open(json_path, "r") as f:
           data = json.loads(f.read())
           self.results[self.loss][str(reg)] = data["results"]
-      else:
-        self.run_nn(self.loss, reg)
+          seeds = [s for s in self.seeds if s not in data["seeds"]]
+          if data["N"] != self.num_examples:
+            raise Exception("Not the correct file for %s" % self.num_examples)
+      if len(seeds) != 0:
+        self.run_nn(self.loss, reg, seeds)
         with open(json_path, "w") as f:
-          data = {"results": self.results[self.loss][str(reg)], "ts": datetime.now().strftime("%d-%m-%H:%M")}
+          data = {
+            "results": self.results[self.loss][str(reg)],
+            "ts": datetime.now().strftime("%d-%m-%H:%M"),
+            "N": self.num_examples,
+            "seeds": seeds
+          }
           json.dump(data, f)
 
-  def run_nn(self, loss, reg):
-    nn_results = {
-      "train_accs": {},
-      "val_accs": {},
-      "test_accs": {},
-      "runtimes": {},
-      "objs": {}
-    }
+  def run_nn(self, loss, reg, seeds):
+    if str(reg) not in self.results[loss]:
+      nn_results = {
+        "train_accs": {},
+        "val_accs": {},
+        "test_accs": {},
+        "runtimes": {},
+        "objs": {},
+        "HL": {}
+      }
+    else:
+      nn_results = self.results[loss][str(reg)]
+
     N = self.num_examples
-    nn_results["train_accs"][N] = []
-    nn_results["val_accs"][N] = []
-    nn_results["test_accs"][N] = []
-    nn_results["runtimes"][N] = []
-    nn_results["objs"][N] = []
-    nn_results["HL"] = []
     self.print_max_time_left()
 
-    for s in self.seeds:
+    tmp_seeds = [s for s in self.seeds if s not in seeds]
+    print("tmp_seeds", tmp_seeds)
+
+    for s in seeds:
+      tmp_seeds.append(s)
       clear_print("%s:  N: %s. Seed: %s. Reg: %s." % (loss, N, s, reg))
       data = load_data(self.dataset, N, s)
       arch = get_architecture(data, self.hls)
@@ -95,21 +110,36 @@ class Exp2():
       clear_print("Runtime was: %s" % (runtime))
       print("")
 
-      nn_results["train_accs"][N].append(train_acc)
-      nn_results["val_accs"][N].append(val_acc)
-      nn_results["test_accs"][N].append(test_acc)
-      nn_results["runtimes"][N].append(runtime)
-      nn_results["objs"][N].append(obj)
+      #nn_results["train_accs"][N].append(train_acc)
+      #nn_results["val_accs"][N].append(val_acc)
+      #nn_results["test_accs"][N].append(test_acc)
+      #nn_results["runtimes"][N].append(runtime)
+      #nn_results["objs"][N].append(obj)
+
+      nn_results["train_accs"][s] = train_acc
+      nn_results["val_accs"][s] = val_acc
+      nn_results["test_accs"][s] = test_acc
+      nn_results["runtimes"][s] = runtime
+      nn_results["objs"][s] = obj
 
       if reg:
         hl = [int(v.sum()) for (k,v) in varMatrices.items() if "H_" in k]
-        nn_results["HL"].append(sum(hl))
+        nn_results["HL"][s] = sum(hl)
       else:
-        nn_results["HL"].append(sum(arch[1:-1]))
+        nn_results["HL"][s] = sum(arch[1:-1])
 
       self.max_time_left -= self.max_runtime
 
-    self.results[loss][str(reg)] = nn_results
+      self.results[loss][str(reg)] = nn_results
+      with open(self.json_path, "w") as f:
+        data = {
+          "results": self.results[self.loss][str(reg)],
+          "ts": datetime.now().strftime("%d-%m-%H:%M"),
+          "N": N,
+          "seeds": tmp_seeds
+        }
+        json.dump(data, f)
+
 
   def plot_results(self):
     self.print_results()
