@@ -232,6 +232,8 @@ class Exp1():
     ax2.plot((-d, +d), (1 - ratio*d, 1 + ratio*d), **kwargs) # bottom-left diagonal
     ax2.plot((1 - d, 1 + d), (1 - ratio*d, 1 + ratio*d), **kwargs) # bottom-right diagonal
 
+    plt.subplots_adjust(hspace=0.1)
+
     plot_dir = "results/plots/exp1"
     plot_dir = "%s/%s" % (plot_dir, setting)
     pathlib.Path(plot_dir).mkdir(parents=True, exist_ok=True)

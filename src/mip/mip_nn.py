@@ -106,7 +106,7 @@ class MIP_NN:
             self.add_constraint((self.act[layer][k,j] == 1) >> (pre_activation >= 0))
             self.add_constraint((self.act[layer][k,j] == 0) >> (pre_activation <= -EPSILON))
 
-  def add_regularizer(self):
+  def add_old_regularizer(self):
     self.H = {}
 
     for lastLayer, neurons_out in enumerate(self.architecture[1:-1]):
@@ -122,8 +122,35 @@ class MIP_NN:
         self.add_constraint((self.H[layer][j] == 0) >> (self.biases[layer][j] == 0))
         for n in range(self.architecture[layer+1]):
           self.add_constraint((self.H[layer][j] == 0) >> (self.weights[layer+1][j,n] == 0))
-          for k in range(self.N):
-            self.add_constraint((self.H[layer][j] == 0) >> (self.var_c[layer+1][k,j,n] == 0))
+          #for k in range(self.N):
+          #  self.add_constraint((self.H[layer][j] == 0) >> (self.var_c[layer+1][k,j,n] == 0))
+            #self.add_constraint((self.H[layer][j] == 0) >> (self.act[layer][j] == 1))
+
+    # Last hidden layer should have at least as many neurons as the output layer
+    self.add_constraint(self.H[layer].sum() >= self.architecture[-1])
+
+  def add_regularizer(self):
+    self.H = {}
+
+    for lastLayer, neurons_out in enumerate(self.architecture[1:-1]):
+      layer = lastLayer + 1
+      neurons_in = self.architecture[lastLayer]
+
+      self.H[layer] = np.full(neurons_out, None)
+      for j in range(neurons_out):
+        self.H[layer][j] = self.add_var(BIN, "h_%s-%s" % (layer,j))
+        for i in range(neurons_in):
+          if not (layer == 1 and self.dead[i]):
+            self.add_constraint((self.H[layer][j] == 0) >> (self.weights[layer][i,j] >= 0))
+            self.add_constraint((self.H[layer][j] == 0) >> (self.weights[layer][i,j] <= 0))
+        self.add_constraint((self.H[layer][j] == 0) >> (self.biases[layer][j] >= 0))
+        self.add_constraint((self.H[layer][j] == 0) >> (self.biases[layer][j] <= 0))
+        for n in range(self.architecture[layer+1]):
+          self.add_constraint((self.H[layer][j] == 0) >> (self.weights[layer+1][j,n] >= 0))
+          self.add_constraint((self.H[layer][j] == 0) >> (self.weights[layer+1][j,n] <= 0))
+          #for k in range(self.N):
+          #  self.add_constraint((self.H[layer][j] == 0) >> (self.var_c[layer+1][k,j,n] == 0))
+          #  self.add_constraint((self.H[layer][j] == 0) >> (self.var_c[layer+1][k,j,n] == 0))
             #self.add_constraint((self.H[layer][j] == 0) >> (self.act[layer][j] == 1))
 
     # Last hidden layer should have at least as many neurons as the output layer
@@ -203,20 +230,6 @@ class MIP_NN:
         if "b_%s_ub" % layer in bound_matrix:
           self.biases[layer][j].ub = bound_matrix["b_%s_ub" % layer][j]
 
-  def warm_start(self, varMatrices):
-    # All pixels that are 0 in every example are considered dead
-    dead = np.all(self.train_x == 0, axis=0)
-
-    for lastLayer, neurons_out in enumerate(self.architecture[1:]):
-      layer = lastLayer + 1
-      neurons_in = self.architecture[lastLayer]
-
-      for j in range(neurons_out):
-        for i in range(neurons_in):
-          if not (layer == 1 and dead[i]):
-            self.weights[layer][i,j].start = varMatrices["w_%s" % layer][i,j]
-        # Bias only for each output neuron
-        self.biases[layer][j].start = varMatrices["b_%s" % layer][j]
 
 
   def add_output_constraints(self):
