@@ -39,6 +39,9 @@ class MIP_NN:
       self.out_bound = np.mean(data['train_x'])*architecture[0]
 
     self.init_params()
+    if reg:
+      # When compressing model, we need slightly more precision becaues of the sparse weight matrices
+      self.m.setParam('IntFeasTol', 1e-7)
     self.add_examples()
     if fair in ["EO", "DP"]:
       self.add_fairness()
@@ -84,9 +87,12 @@ class MIP_NN:
             self.act[layer][k,j] = self.add_var(BIN, "act_%s-%s_%s" % (layer,j,k))
 
   def add_examples(self):
+    #self.pre_acts = {}
+
     for lastLayer, neurons_out in enumerate(self.architecture[1:]):
       layer = lastLayer + 1
       neurons_in = self.architecture[lastLayer]
+      #self.pre_acts[layer] = np.full((self.N, neurons_out), None)
 
       for k in range(self.N):
         for j in range(neurons_out):
@@ -101,12 +107,13 @@ class MIP_NN:
               self.add_constraint(self.var_c[layer][k,i,j] + self.weights[layer][i,j] + 2*self.bound*self.act[lastLayer][k,i] >= 0*self.bound)
               inputs.append(self.var_c[layer][k,i,j])
           pre_activation = sum(inputs) + self.biases[layer][j]
+          #self.pre_acts[layer][k,j] = pre_activation
 
           if layer < len(self.architecture) - 1:
             self.add_constraint((self.act[layer][k,j] == 1) >> (pre_activation >= 0))
             self.add_constraint((self.act[layer][k,j] == 0) >> (pre_activation <= -EPSILON))
 
-  def add_old_regularizer(self):
+  def add_regularizer(self):
     self.H = {}
 
     for lastLayer, neurons_out in enumerate(self.architecture[1:-1]):
@@ -123,33 +130,6 @@ class MIP_NN:
         for n in range(self.architecture[layer+1]):
           self.add_constraint((self.H[layer][j] == 0) >> (self.weights[layer+1][j,n] == 0))
           #for k in range(self.N):
-          #  self.add_constraint((self.H[layer][j] == 0) >> (self.var_c[layer+1][k,j,n] == 0))
-            #self.add_constraint((self.H[layer][j] == 0) >> (self.act[layer][j] == 1))
-
-    # Last hidden layer should have at least as many neurons as the output layer
-    self.add_constraint(self.H[layer].sum() >= self.architecture[-1])
-
-  def add_regularizer(self):
-    self.H = {}
-
-    for lastLayer, neurons_out in enumerate(self.architecture[1:-1]):
-      layer = lastLayer + 1
-      neurons_in = self.architecture[lastLayer]
-
-      self.H[layer] = np.full(neurons_out, None)
-      for j in range(neurons_out):
-        self.H[layer][j] = self.add_var(BIN, "h_%s-%s" % (layer,j))
-        for i in range(neurons_in):
-          if not (layer == 1 and self.dead[i]):
-            self.add_constraint((self.H[layer][j] == 0) >> (self.weights[layer][i,j] >= 0))
-            self.add_constraint((self.H[layer][j] == 0) >> (self.weights[layer][i,j] <= 0))
-        self.add_constraint((self.H[layer][j] == 0) >> (self.biases[layer][j] >= 0))
-        self.add_constraint((self.H[layer][j] == 0) >> (self.biases[layer][j] <= 0))
-        for n in range(self.architecture[layer+1]):
-          self.add_constraint((self.H[layer][j] == 0) >> (self.weights[layer+1][j,n] >= 0))
-          self.add_constraint((self.H[layer][j] == 0) >> (self.weights[layer+1][j,n] <= 0))
-          #for k in range(self.N):
-          #  self.add_constraint((self.H[layer][j] == 0) >> (self.var_c[layer+1][k,j,n] == 0))
           #  self.add_constraint((self.H[layer][j] == 0) >> (self.var_c[layer+1][k,j,n] == 0))
             #self.add_constraint((self.H[layer][j] == 0) >> (self.act[layer][j] == 1))
 

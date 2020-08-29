@@ -20,9 +20,9 @@ class Exp2():
   def __init__(self, short, show):
     self.loss = "sat_margin"
     self.regs = [0, 0.1, 0.01]
-    self.seeds = [821323421,465426341,99413,1436061,7775501]
+    self.seeds = [821323421]#,465426341,99413,1436061,7775501]
     self.dataset = "adult"
-    self.num_examples = 1000
+    self.num_examples = 800
     self.max_runtime = 10*60
     self.bound = 15
     self.hls = [16]

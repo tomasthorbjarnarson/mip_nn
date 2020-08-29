@@ -29,6 +29,7 @@ class SAT_MARGIN(MIP_NN):
     lastLayer = layer - 1
     neurons_in = self.architecture[lastLayer]
     neurons_out = self.architecture[layer]
+    #self.raw_output = np.full((self.N, neurons_out), None)
 
     if self.reg:
       self.margin = self.add_var(CONT, name="margin", bound=self.out_bound)
@@ -37,6 +38,7 @@ class SAT_MARGIN(MIP_NN):
 
     for k in range(self.N):
       for j in range(neurons_out):
+        #self.raw_output[k,j] = self.add_var(CONT, name="raw_output", bound=self.out_bound)
         inputs = []
         for i in range(neurons_in):
           if layer == 1:
@@ -44,6 +46,9 @@ class SAT_MARGIN(MIP_NN):
           else:
             inputs.append(self.var_c[layer][k,i,j])
         pre_activation = sum(inputs) + self.biases[layer][j]
+        #self.add_constraint(self.raw_output[k,j] == pre_activation)
+        #self.raw_output[k,j] = pre_activation
+
         if self.reg:
           self.add_constraint((self.output[k,j] == 1) >> (pre_activation*self.data['oh_train_y'][k,j] >= self.margin))
           self.add_constraint((self.output[k,j] == 0) >> (pre_activation*self.data['oh_train_y'][k,j] <= self.margin - EPSILON))
