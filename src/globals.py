@@ -12,7 +12,7 @@ CONT = 2
 
 EPSILON = 1e-4
 
-LOG = False
+LOG = True
 
 MULTIOBJ = False
 

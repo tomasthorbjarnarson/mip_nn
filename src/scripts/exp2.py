@@ -20,7 +20,7 @@ class Exp2():
   def __init__(self, short, show):
     self.loss = "sat_margin"
     self.regs = [0, 0.1, 0.01]
-    self.seeds = [821323421]#,465426341,99413,1436061,7775501]
+    self.seeds = [821323421,465426341,99413,1436061,7775501]
     self.dataset = "adult"
     self.num_examples = 800
     self.max_runtime = 10*60
@@ -70,7 +70,7 @@ class Exp2():
             "results": self.results[self.loss][str(reg)],
             "ts": datetime.now().strftime("%d-%m-%H:%M"),
             "N": self.num_examples,
-            "seeds": seeds
+            "seeds": self.seeds
           }
           json.dump(data, f)
 
@@ -177,12 +177,12 @@ class Exp2():
       plt.show()
 
   def print_results(self):
-    settings = ["train_accs", "test_accs", "runtimes"]
+    settings = ["train_accs", "test_accs", "runtimes", "HL"]
     for ind, setting in enumerate(settings):
       for i,reg in enumerate(self.regs):
-        hls = self.results[self.loss][str(reg)]["HL"]
+        #hls = list(self.results[self.loss][str(reg)]["HL"].values())
         res = list(self.results[self.loss][str(reg)][setting].values())
-        print(setting, reg, np.mean(res), np.std(res), np.mean(hls), np.std(hls))
+        print(setting, "reg: %s" % reg, np.mean(res), np.std(res))#, np.mean(hls), np.std(hls))
 
   def print_max_time_left(self):
     time_left = self.max_time_left

@@ -120,7 +120,7 @@ class Exp3():
       for var in network_vars:
         val_acc = infer_and_accuracy(data["val_x"], data["val_y"], var, self.architecture)
         val_accs.append(val_acc)
-      print("val_accs", val_accs)
+      #print("val_accs", val_accs)
       weighted_avg = get_weighted_mean_vars(network_vars, val_accs)
 
       bound_matrix = get_weighted_mean_bound_matrix(network_vars, self.bound, self.bound - epoch, weighted_avg)
