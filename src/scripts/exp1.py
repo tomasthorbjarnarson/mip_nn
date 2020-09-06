@@ -127,7 +127,6 @@ class Exp1():
         nn_results["runtimes"][N].append(runtime)
         nn_results["objs"][N].append(obj)
 
-        del nn.m
         del nn
 
         self.max_time_left -= self.max_runtime

@@ -2,6 +2,7 @@ import argparse
 from scripts.exp1 import Exp1
 from scripts.exp2 import Exp2
 from scripts.exp3 import Exp3
+from scripts.extra_exp import Extra_Exp
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Optional app description')
@@ -27,6 +28,8 @@ if __name__ == '__main__':
     run = Exp2(short, show)
   elif exp == "exp3":
     run = Exp3(short, show, loss, data, batch_size)
+  elif exp =="extra":
+    run = Extra_Exp(short, show)
   else:
     raise Exception("Experiment %s not known" % (exp))
     
