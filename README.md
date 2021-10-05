@@ -2,14 +2,17 @@
 
 To run experiments:
 
-python src/run_script.py --exp=exp1
-python src/run_script.py --exp=exp2
-python src/run_script.py --exp=exp3
-python src/run_script.py --exp=exp4
+<code>python src/run_script.py --exp=exp1</code>
+
+<code>python src/run_script.py --exp=exp2</code>
+
+<code>python src/run_script.py --exp=exp3</code>
+
+<code>python src/run_script.py --exp=exp4</code>
 
 To run any model:
 
-python main_run.py --time=36000 --bound=1 --data=adult --seed=99413 --hl=16 --ex=100 --loss=min_hinge
+<code>python main_run.py --time=36000 --bound=1 --data=adult --seed=99413 --hl=16 --ex=100 --loss=min_hinge</code>
 
 time: time limit of model
 bound: P value for limit of network values
