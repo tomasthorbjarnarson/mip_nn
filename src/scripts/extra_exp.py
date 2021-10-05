@@ -27,7 +27,7 @@ class Extra_Exp():
     self.seeds = [821323421,465426341,99413,1436061,7775501]
     self.dataset = "mnist"
     self.num_examples = 100
-    self.max_runtime = 10*60
+    self.max_runtime = 2*60
     self.hls = [16]
     self.short = short
     self.show = show

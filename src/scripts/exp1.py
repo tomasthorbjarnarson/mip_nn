@@ -36,9 +36,10 @@ class Exp1():
     self.losses = ["max_correct", "sat_margin", "gd_nn", "min_hinge"]
     self.bounds = [1,3,7,15]
     self.seeds = [821323421,465426341,99413,1436061,7775501]
-    self.dataset = "adult"
-    self.num_examples = [40,80,120,160,200,240,280]
+    self.dataset = "heart"
+    self.num_examples = [40,80,120,160,200]#,240,280]
     self.max_runtime = 10*60
+    self.max_runtime = 15
     self.hls = [16]
     self.short = short
     self.show = show
@@ -57,7 +58,7 @@ class Exp1():
     for loss in self.losses:
       self.results[loss] = {}
       for bound in self.bounds:
-        json_dir = "results/json/exp1"
+        json_dir = "results/json/exp1-adult-15min/"
         pathlib.Path(json_dir).mkdir(parents=True, exist_ok=True)
 
         name = "%s-%s" % (loss, bound)
@@ -81,7 +82,7 @@ class Exp1():
             json.dump(data, f)
 
   def run_nn(self, loss, bound, num_examples):
-    if self.results[loss] == {}:
+    if self.results[loss] == {} or str(bound) not in self.results[loss]:
       nn_results = {
         "train_accs": {},
         "val_accs": {},
@@ -167,7 +168,7 @@ class Exp1():
         y,err = get_mean_std([self.results[loss][str(bound)][setting][str(x)] for x in self.num_examples])
         label = "%s P=%s" % (loss,bound)
         lines += plt.plot(x,y, label=label, color=loss_colors[loss], ls=bound_styles[bound])
-        plt.fill_between(x, y - err, y + err, alpha=alphas[bound], facecolor=loss_colors[loss])
+        #plt.fill_between(x, y - err, y + err, alpha=alphas[bound], facecolor=loss_colors[loss])
         labels.append(label)
 
     #plt.legend(ncol=len(self.losses), loc="upper left", bbox_to_anchor=(1, 0.5))
@@ -177,7 +178,7 @@ class Exp1():
     plt.ylabel(ylabel)
     plt.ylim(ylim)
 
-    plot_dir = "results/plots/exp1"
+    plot_dir = "results/plots/exp1-adult-15min/"
     plot_dir = "%s/%s" % (plot_dir, setting)
     pathlib.Path(plot_dir).mkdir(parents=True, exist_ok=True)
     plot_name = ""
@@ -199,7 +200,7 @@ class Exp1():
         #y,err = get_mean_std(self.results[loss][str(bound)][setting].values())
         y,err = get_mean_std([self.results[loss][str(bound)][setting][str(x)] for x in self.num_examples])
         ax.plot(x,y, label="%s-%s" % (loss,bound), color=loss_colors[loss], ls=bound_styles[bound])
-        ax.fill_between(x, y - err, y + err, alpha=alphas[bound], facecolor=loss_colors[loss])
+        #ax.fill_between(x, y - err, y + err, alpha=alphas[bound], facecolor=loss_colors[loss])
         ax2.plot(x,y, label="%s-%s" % (loss,bound), color=loss_colors[loss], ls=bound_styles[bound])
 
 
@@ -233,7 +234,7 @@ class Exp1():
 
     plt.subplots_adjust(hspace=0.1)
 
-    plot_dir = "results/plots/exp1"
+    plot_dir = "results/plots/exp1-adult-15min/"
     plot_dir = "%s/%s" % (plot_dir, setting)
     pathlib.Path(plot_dir).mkdir(parents=True, exist_ok=True)
     plot_name = ""

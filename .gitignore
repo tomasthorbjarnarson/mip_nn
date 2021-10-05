@@ -2,3 +2,4 @@ Paper_versions/
 **/old/*
 *.png
 *-short
+src/results/*

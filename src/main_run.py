@@ -76,7 +76,8 @@ if __name__ == '__main__':
     b2 = varMatrices['b_2']
     train = nn.data['train_x']
 
-    tmp_inf = np.dot(train, w1) + b1
+    pre_sign = np.dot(train, w1) + b1
+    tmp_inf = pre_sign
     tmp_inf[tmp_inf >= 0] = 1
     tmp_inf[tmp_inf < 0] = -1
     inf = np.dot(tmp_inf, varMatrices['w_2']) + varMatrices['b_2']
