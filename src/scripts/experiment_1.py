@@ -20,7 +20,7 @@ loss_colors = {
 }
 
 
-class Extra_Exp():
+class Exp1():
   def __init__(self, short, show):
     self.losses = ["max_correct", "sat_margin", "min_hinge", "min_w", "max_m", "gd_nn"]
     self.bound = 1

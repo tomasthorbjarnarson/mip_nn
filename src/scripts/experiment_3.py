@@ -16,7 +16,7 @@ reg_colors = {
   "1": colors[3]
 }
 
-class Exp2():
+class Exp3():
   def __init__(self, short, show):
     self.loss = "sat_margin"
     self.regs = [0, 0.1, 0.01]

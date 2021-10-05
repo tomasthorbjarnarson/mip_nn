@@ -31,15 +31,16 @@ alphas = {
   15: 0.5
 }
 
-class Exp1():
+class Exp2():
   def __init__(self, short, show):
     self.losses = ["max_correct", "sat_margin", "gd_nn", "min_hinge"]
     self.bounds = [1,3,7,15]
     self.seeds = [821323421,465426341,99413,1436061,7775501]
-    self.dataset = "heart"
-    self.num_examples = [40,80,120,160,200]#,240,280]
+    # self.dataset = "adult" # 2A
+    self.dataset = "heart" # 2B
+    #self.num_examples = [40,80,120,160,200,240,280] # 2A
+    self.num_examples = [40,80,120,160,200]#,240,280] # 2B
     self.max_runtime = 10*60
-    self.max_runtime = 15
     self.hls = [16]
     self.short = short
     self.show = show
