@@ -1,5 +1,9 @@
 # Training Neural Networks with Mixed Integer Programming
 
+This repository contains code that was used for experiments for Tómas Þorbjarnarson's Master's thesis at TU Delft which can be accessed here: http://resolver.tudelft.nl/uuid:27875d51-672a-4a78-9aad-c44236992518
+
+## How to run
+
 To run experiments:
 
 <code>python src/run_script.py --exp=exp1</code>
